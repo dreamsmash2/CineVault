@@ -1,0 +1,23 @@
+{
+  "name": "CineVault",
+  "short_name": "CineVault",
+  "description": "Tu colección personal de cine",
+  "start_url": "/CineVault/",
+  "scope": "/CineVault/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080810",
+  "theme_color": "#080810",
+  "icons": [
+    {"src": "icon-cv-192.png","sizes": "192x192","type": "image/png","purpose": "any"},
+    {"src": "icon-cv-192.png","sizes": "192x192","type": "image/png","purpose": "maskable"},
+    {"src": "icon-cv-512.png","sizes": "512x512","type": "image/png","purpose": "any"},
+    {"src": "icon-cv-512.png","sizes": "512x512","type": "image/png","purpose": "maskable"}
+  ],
+  "screenshots": [
+    {"src": "icon-cv-512.png","sizes": "512x512","type": "image/png","form_factor": "wide","label": "CineVault"},
+    {"src": "icon-cv-512.png","sizes": "512x512","type": "image/png","label": "CineVault móvil"}
+  ],
+  "categories": ["entertainment","lifestyle"],
+  "lang": "es"
+}
