@@ -215,12 +215,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
 .cast-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--ink4);margin:0 auto 4px;}
 .cast-name{font-size:9px;color:var(--text3);line-height:1.2;}
 
-/* TRAILER PLAYER */
-.trailer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
-.trailer-box{position:relative;width:90%;max-width:800px;}
-.trailer-box iframe{width:100%;aspect-ratio:16/9;border:none;border-radius:10px;display:block;}
-.trailer-close{position:absolute;top:-40px;right:0;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;opacity:.8;transition:opacity .2s;}
-.trailer-close:hover{opacity:1;}
+/* SCAN */
 .scan-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(76,201,240,.1);border:1px solid rgba(76,201,240,.25);border-radius:6px;padding:8px 14px;font-size:11px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:.75rem;transition:all .2s;}
 .scan-btn:hover{background:rgba(76,201,240,.18);}
 .barcode-wrap{display:none;margin-bottom:1rem;border-radius:var(--r);overflow:hidden;border:1px solid var(--border2);}
@@ -431,14 +426,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
         <button class="btn primary sm" id="manual-save">Añadir a colección</button>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- TRAILER PLAYER -->
-<div class="trailer-overlay" id="trailer-overlay" style="display:none;" onclick="closeTrailer(event)">
-  <div class="trailer-box">
-    <button class="trailer-close" onclick="closeTrailerBtn()">✕</button>
-    <iframe id="trailer-iframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
   </div>
 </div>
 
@@ -743,7 +730,7 @@ async function openModal(movie,fromList='collection'){
   // Show trailer from meta if saved
   if(meta.trailerKey){
     document.getElementById('modal-trailer-btn').innerHTML=
-      `<button class="trailer-btn" onclick="openTrailer('${meta.trailerKey}')">▶ Ver trailer</button>`;
+      `<a class="trailer-btn" href="https://www.youtube.com/watch?v=${meta.trailerKey}" target="_blank" rel="noopener">▶ Ver trailer en YouTube</a>`;
     document.getElementById('modal-trailer-input').value=`https://www.youtube.com/watch?v=${meta.trailerKey}`;
   } else {
     document.getElementById('modal-trailer-btn').innerHTML='';
@@ -790,7 +777,7 @@ async function openModal(movie,fromList='collection'){
       if(trailer){
         // Only set if user hasn't already saved a manual trailer
         if(!st.meta[movie.id]?.trailerKey){
-          document.getElementById('modal-trailer-btn').innerHTML=`<button class="trailer-btn" onclick="openTrailer('${trailer.key}')">▶ Ver trailer</button>`;
+          document.getElementById('modal-trailer-btn').innerHTML=`<a class="trailer-btn" href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" rel="noopener">▶ Ver trailer en YouTube</a>`;
           document.getElementById('modal-trailer-input').value=`https://www.youtube.com/watch?v=${trailer.key}`;
           if(st.meta[movie.id])st.meta[movie.id].trailerKey=trailer.key;
           save();
@@ -1040,21 +1027,6 @@ document.getElementById('gd-connect-btn').onclick=gdConnect;
 document.getElementById('gd-save-btn').onclick=gdSave;
 document.getElementById('gd-load-btn').onclick=gdLoad;
 document.getElementById('gd-disconnect-btn').onclick=gdDisconnect;
-
-// TRAILER PLAYER
-function openTrailer(key){
-  document.getElementById('trailer-iframe').src=`https://www.youtube.com/embed/${key}?autoplay=1&rel=0`;
-  document.getElementById('trailer-overlay').style.display='flex';
-}
-function closeTrailerBtn(){
-  document.getElementById('trailer-iframe').src='';
-  document.getElementById('trailer-overlay').style.display='none';
-}
-function closeTrailer(e){
-  if(e.target===document.getElementById('trailer-overlay')) closeTrailerBtn();
-}
-// Close with Escape key
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('trailer-overlay').style.display!=='none')closeTrailerBtn();});
 
 // TOAST
 let toastT;
