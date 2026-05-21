@@ -1036,12 +1036,30 @@ async function gdReq(method,url,body,isJson=true){
 async function gdFindFile(){const r=await gdReq('GET',`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${GD_FILENAME}'&fields=files(id)`);if(!r)return;const d=await r.json();if(d.files?.length){gd.fileId=d.files[0].id;saveGD();}}
 async function gdSave(){
   if(!confirm('¿Guardar en Google Drive? Sobreescribirá los datos actuales.'))return;
+  if(!gd.accessToken){toast('Reconecta con Google Drive primero','⚠');return;}
   const payload=JSON.stringify({...st,_imgs:imgs},null,2);
   try{
-    if(!gd.fileId){const b='-------cvBoundary';const meta=JSON.stringify({name:GD_FILENAME,parents:['appDataFolder']});const body=`--${b}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${b}--`;const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Authorization':`Bearer ${gd.accessToken}`,'Content-Type':`multipart/related; boundary=${b}`},body});const d=await r.json();gd.fileId=d.id;saveGD();}
-    else{await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gd.fileId}?uploadType=media`,{method:'PATCH',headers:{'Authorization':`Bearer ${gd.accessToken}`,'Content-Type':'application/json'},body:payload});}
-    toast('Guardado en Drive','☁');
-  }catch(e){toast('Error al guardar','⚠');}
+    let resp;
+    if(!gd.fileId){
+      const b='-------cvBoundary';
+      const meta=JSON.stringify({name:GD_FILENAME,parents:['appDataFolder']});
+      const body=`--${b}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${b}--`;
+      resp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Authorization':`Bearer ${gd.accessToken}`,'Content-Type':`multipart/related; boundary=${b}`},body});
+      if(resp.status===401){gd.accessToken='';saveGD();updateGDUI();toast('Sesión expirada — reconecta con Google Drive','⚠');return;}
+      const d=await resp.json();
+      if(!d.id){toast('Error al crear archivo en Drive','⚠');console.error(d);return;}
+      gd.fileId=d.id;saveGD();
+    } else {
+      resp=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gd.fileId}?uploadType=media`,{method:'PATCH',headers:{'Authorization':`Bearer ${gd.accessToken}`,'Content-Type':'application/json'},body:payload});
+      if(resp.status===401){gd.accessToken='';saveGD();updateGDUI();toast('Sesión expirada — reconecta con Google Drive','⚠');return;}
+      if(resp.status===404){
+        // File was deleted, create new one
+        gd.fileId='';saveGD();toast('Archivo no encontrado en Drive, reintenta','⚠');return;
+      }
+      if(!resp.ok){toast(`Error al guardar en Drive (${resp.status})','⚠`);return;}
+    }
+    toast('Guardado en Drive ✓','☁');
+  }catch(e){toast('Error de red al guardar en Drive','⚠');console.error(e);}
 }
 async function gdLoad(){
   if(!confirm('¿Cargar desde Drive? Los datos locales serán reemplazados.'))return;
