@@ -215,7 +215,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
 .cast-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--ink4);margin:0 auto 4px;}
 .cast-name{font-size:9px;color:var(--text3);line-height:1.2;}
 
-/* SCAN */
+/* TRAILER PLAYER */
+.trailer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.trailer-box{position:relative;width:90%;max-width:800px;}
+.trailer-box iframe{width:100%;aspect-ratio:16/9;border:none;border-radius:10px;display:block;}
+.trailer-close{position:absolute;top:-40px;right:0;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;opacity:.8;transition:opacity .2s;}
+.trailer-close:hover{opacity:1;}
 .scan-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(76,201,240,.1);border:1px solid rgba(76,201,240,.25);border-radius:6px;padding:8px 14px;font-size:11px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:.75rem;transition:all .2s;}
 .scan-btn:hover{background:rgba(76,201,240,.18);}
 .barcode-wrap{display:none;margin-bottom:1rem;border-radius:var(--r);overflow:hidden;border:1px solid var(--border2);}
@@ -354,7 +359,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
       <div class="modal-chips" id="modal-chips"></div>
       <p class="modal-synopsis" id="modal-synopsis"></p>
       <div id="modal-cast-section"></div>
+      <div class="modal-section-title">Trailer</div>
       <div id="modal-trailer-btn"></div>
+      <input type="text" class="modal-input" id="modal-trailer-input" placeholder="Pega aquí el enlace de YouTube si no aparece automáticamente..." style="margin-bottom:.5rem;font-size:12px;">
       <div class="modal-section-title">Mi puntuación</div>
       <div class="star-row" id="modal-stars">
         <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span><span class="star" data-v="6">★</span><span class="star" data-v="7">★</span><span class="star" data-v="8">★</span><span class="star" data-v="9">★</span><span class="star" data-v="10">★</span>
@@ -424,6 +431,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
         <button class="btn primary sm" id="manual-save">Añadir a colección</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- TRAILER PLAYER -->
+<div class="trailer-overlay" id="trailer-overlay" style="display:none;" onclick="closeTrailer(event)">
+  <div class="trailer-box">
+    <button class="trailer-close" onclick="closeTrailerBtn()">✕</button>
+    <iframe id="trailer-iframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
   </div>
 </div>
 
@@ -603,16 +618,75 @@ document.getElementById('manual-save').onclick=()=>{
   const id='manual_'+Date.now();
   const year=document.getElementById('manual-year').value.trim();
   const genres=document.getElementById('manual-genres').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const trailerUrl=document.getElementById('manual-trailer').value.trim();
+  // Extract YouTube video key if full URL pasted
+  let trailerKey='';
+  const ytMatch=trailerUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if(ytMatch)trailerKey=ytMatch[1];
+  else if(trailerUrl.length===11)trailerKey=trailerUrl;
   const entry={id,title,original_title:document.getElementById('manual-original').value.trim(),poster_path:'',backdrop_path:'',release_date:year?year+'-01-01':'',vote_average:0,genre_ids:[],_manual:true};
-  const meta={rating:0,format:'',status:'pending',loan:'',notes:'',director:document.getElementById('manual-director').value.trim(),cast:document.getElementById('manual-cast').value.trim(),genres,synopsis:document.getElementById('manual-synopsis').value.trim()};
-  if(manualTarget==='collection'){st.collection.push(entry);if(st.meta[id]){}st.meta[id]=meta;}
+  const meta={rating:0,format:'',status:'pending',loan:'',notes:'',director:document.getElementById('manual-director').value.trim(),cast:document.getElementById('manual-cast').value.trim(),genres,synopsis:document.getElementById('manual-synopsis').value.trim(),trailerKey};
+  if(manualTarget==='collection'){st.collection.push(entry);st.meta[id]=meta;}
   else{st.wishlist.push(entry);st.meta[id]=meta;}
   if(manualPosterData){imgs[id]=manualPosterData;saveImgs();}
   save();buildColFilters();renderAll();
   document.getElementById('manual-modal-overlay').style.display='none';
   toast(`${title} añadida`,'✏️');
 };
-document.getElementById('manual-cancel').onclick=()=>document.getElementById('manual-modal-overlay').style.display='none';
+// EDIT MANUAL MOVIE
+function openManualEdit(movie){
+  manualTarget=movie._list||'collection';
+  manualPosterData=null;
+  const meta=st.meta[movie.id]||{};
+  document.getElementById('manual-title').value=movie.title||'';
+  document.getElementById('manual-original').value=movie.original_title||'';
+  document.getElementById('manual-year').value=movie.release_date?movie.release_date.slice(0,4):'';
+  document.getElementById('manual-director').value=meta.director||'';
+  document.getElementById('manual-cast').value=meta.cast||'';
+  document.getElementById('manual-genres').value=(meta.genres||[]).join(', ');
+  document.getElementById('manual-synopsis').value=meta.synopsis||'';
+  // Reconstruct trailer URL
+  const tk=meta.trailerKey||'';
+  document.getElementById('manual-trailer').value=tk?`https://www.youtube.com/watch?v=${tk}`:'';
+  // Show existing poster
+  const area=document.getElementById('manual-poster-area');
+  const ps=getPosterSrc(movie);
+  area.innerHTML=ps?`<img src="${ps}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">`:'<span style="font-size:24px;">🎬</span><span>Subir portada</span>';
+  // Change save button to update mode
+  const saveBtn=document.getElementById('manual-save');
+  saveBtn.textContent='Actualizar película';
+  const origOnclick=saveBtn.onclick;
+  saveBtn.onclick=()=>{
+    const title=document.getElementById('manual-title').value.trim();
+    if(!title){toast('El título es obligatorio','⚠');return;}
+    const year=document.getElementById('manual-year').value.trim();
+    const genres=document.getElementById('manual-genres').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const trailerUrl=document.getElementById('manual-trailer').value.trim();
+    let trailerKey='';
+    const ytMatch=trailerUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if(ytMatch)trailerKey=ytMatch[1];
+    else if(trailerUrl.length===11)trailerKey=trailerUrl;
+    // Update entry
+    const idx=st.collection.findIndex(m=>m.id===movie.id);
+    const widx=st.wishlist.findIndex(m=>m.id===movie.id);
+    if(idx>-1){st.collection[idx].title=title;st.collection[idx].original_title=document.getElementById('manual-original').value.trim();st.collection[idx].release_date=year?year+'-01-01':'';}
+    if(widx>-1){st.wishlist[widx].title=title;st.wishlist[widx].original_title=document.getElementById('manual-original').value.trim();st.wishlist[widx].release_date=year?year+'-01-01':'';}
+    if(!st.meta[movie.id])st.meta[movie.id]={};
+    Object.assign(st.meta[movie.id],{director:document.getElementById('manual-director').value.trim(),cast:document.getElementById('manual-cast').value.trim(),genres,synopsis:document.getElementById('manual-synopsis').value.trim(),trailerKey});
+    if(manualPosterData){imgs[movie.id]=manualPosterData;saveImgs();}
+    save();buildColFilters();renderAll();
+    document.getElementById('manual-modal-overlay').style.display='none';
+    saveBtn.textContent='Añadir a colección';
+    saveBtn.onclick=origOnclick;
+    toast('Película actualizada','✓');
+  };
+  document.getElementById('manual-modal-overlay').style.display='flex';
+}
+
+document.getElementById('manual-cancel').onclick=()=>{
+  document.getElementById('manual-save').textContent='Añadir a colección';
+  document.getElementById('manual-modal-overlay').style.display='none';
+};
 document.getElementById('manual-modal-overlay').onclick=e=>{if(e.target===document.getElementById('manual-modal-overlay'))document.getElementById('manual-modal-overlay').style.display='none';};
 document.getElementById('add-manual-col-btn').onclick=()=>openManualModal('collection');
 document.getElementById('add-manual-wish-btn').onclick=()=>openManualModal('wishlist');
@@ -644,17 +718,58 @@ async function openModal(movie,fromList='collection'){
   genres.slice(0,4).forEach(g=>chips.insertAdjacentHTML('beforeend',`<span class="chip genre">${g}</span>`));
   // Synopsis
   document.getElementById('modal-synopsis').textContent=meta.synopsis||movie.overview||'';
-  document.getElementById('modal-cast-section').innerHTML='';
-  document.getElementById('modal-trailer-btn').innerHTML='';
   // Stars, format, status, loan, notes
   setStars(modalRating);
   document.querySelectorAll('#modal-fmt .fmt-btn').forEach(b=>{b.className='fmt-btn';if(b.dataset.fmt===meta.format)b.className=`fmt-btn active-${meta.format}`;});
   document.querySelectorAll('#modal-status .status-btn').forEach(b=>{b.className='status-btn';if(b.dataset.status===meta.status)b.className=`status-btn active-${meta.status}`;});
   document.getElementById('modal-loan').value=meta.loan||'';
   document.getElementById('modal-notes').value=meta.notes||'';
+
+  document.getElementById('modal-cast-section').innerHTML='';
+  document.getElementById('modal-trailer-btn').innerHTML='';
+
+  // Show cast from meta (works for both manual and TMDB)
+  if(meta.cast){
+    const names=meta.cast.split(',').map(s=>s.trim()).filter(Boolean);
+    if(names.length){
+      document.getElementById('modal-cast-section').innerHTML=`
+        <div class="modal-section-title">Reparto</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.75rem;">
+          ${names.map(n=>`<span class="chip">${n}</span>`).join('')}
+        </div>`;
+    }
+  }
+
+  // Show trailer from meta if saved
+  if(meta.trailerKey){
+    document.getElementById('modal-trailer-btn').innerHTML=
+      `<button class="trailer-btn" onclick="openTrailer('${meta.trailerKey}')">▶ Ver trailer</button>`;
+    document.getElementById('modal-trailer-input').value=`https://www.youtube.com/watch?v=${meta.trailerKey}`;
+  } else {
+    document.getElementById('modal-trailer-btn').innerHTML='';
+    document.getElementById('modal-trailer-input').value='';
+  }
+
+  // Edit button for manual movies
+  const existingEdit=document.getElementById('modal-edit-manual-btn');
+  if(existingEdit)existingEdit.remove();
+  if(movie._manual){
+    const editBtn=document.createElement('button');
+    editBtn.id='modal-edit-manual-btn';
+    editBtn.className='btn sm';
+    editBtn.style.cssText='color:var(--gold);border-color:rgba(244,162,97,.3);margin-bottom:.5rem;width:100%;';
+    editBtn.textContent='✏️ Editar datos de esta película';
+    editBtn.onclick=()=>{
+      document.getElementById('movie-modal-overlay').style.display='none';
+      openManualEdit(movie);
+    };
+    document.getElementById('modal-trailer-btn').insertAdjacentElement('afterend',editBtn);
+  }
+
   document.getElementById('modal-delete').style.display='';
   document.getElementById('movie-modal-overlay').style.display='flex';
-  // Fetch extra if not manual
+
+  // Fetch extra details only for TMDB movies
   if(!movie._manual){
     try{
       const{detail,credits,videos}=await tmdbDetail(movie.id);
@@ -671,7 +786,16 @@ async function openModal(movie,fromList='collection'){
       }
       // Trailer
       const trailer=(videos.results||[]).find(v=>v.site==='YouTube'&&v.type==='Trailer');
-      if(trailer)document.getElementById('modal-trailer-btn').innerHTML=`<a class="trailer-btn" href="https://www.youtube.com/watch?v=${trailer.key}" target="_blank" rel="noopener">▶ Ver trailer en YouTube</a>`;
+      const trailer=(videos.results||[]).find(v=>v.site==='YouTube'&&v.type==='Trailer');
+      if(trailer){
+        // Only set if user hasn't already saved a manual trailer
+        if(!st.meta[movie.id]?.trailerKey){
+          document.getElementById('modal-trailer-btn').innerHTML=`<button class="trailer-btn" onclick="openTrailer('${trailer.key}')">▶ Ver trailer</button>`;
+          document.getElementById('modal-trailer-input').value=`https://www.youtube.com/watch?v=${trailer.key}`;
+          if(st.meta[movie.id])st.meta[movie.id].trailerKey=trailer.key;
+          save();
+        }
+      }
     }catch(e){}
   }
 }
@@ -681,8 +805,18 @@ function saveModal(){
   const id=modalMovie.id;
   const format=document.querySelector('#modal-fmt .fmt-btn[class*="active-"]')?.dataset.fmt||'';
   const status=document.querySelector('#modal-status .status-btn[class*="active-"]')?.dataset.status||'pending';
+  // Parse trailer URL
+  const trailerUrl=document.getElementById('modal-trailer-input').value.trim();
+  let trailerKey=st.meta[id]?.trailerKey||'';
+  if(trailerUrl){
+    const ytMatch=trailerUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if(ytMatch)trailerKey=ytMatch[1];
+    else if(trailerUrl.length===11)trailerKey=trailerUrl;
+  } else {
+    trailerKey='';
+  }
   if(!st.meta[id])st.meta[id]={};
-  Object.assign(st.meta[id],{rating:modalRating,format,status,loan:document.getElementById('modal-loan').value.trim(),notes:document.getElementById('modal-notes').value.trim()});
+  Object.assign(st.meta[id],{rating:modalRating,format,status,loan:document.getElementById('modal-loan').value.trim(),notes:document.getElementById('modal-notes').value.trim(),trailerKey});
   save();renderAll();
   document.getElementById('movie-modal-overlay').style.display='none';
   toast('Guardado','✓');
@@ -906,6 +1040,21 @@ document.getElementById('gd-connect-btn').onclick=gdConnect;
 document.getElementById('gd-save-btn').onclick=gdSave;
 document.getElementById('gd-load-btn').onclick=gdLoad;
 document.getElementById('gd-disconnect-btn').onclick=gdDisconnect;
+
+// TRAILER PLAYER
+function openTrailer(key){
+  document.getElementById('trailer-iframe').src=`https://www.youtube.com/embed/${key}?autoplay=1&rel=0`;
+  document.getElementById('trailer-overlay').style.display='flex';
+}
+function closeTrailerBtn(){
+  document.getElementById('trailer-iframe').src='';
+  document.getElementById('trailer-overlay').style.display='none';
+}
+function closeTrailer(e){
+  if(e.target===document.getElementById('trailer-overlay')) closeTrailerBtn();
+}
+// Close with Escape key
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('trailer-overlay').style.display!=='none')closeTrailerBtn();});
 
 // TOAST
 let toastT;
