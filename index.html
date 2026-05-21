@@ -366,13 +366,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
       <div class="star-row" id="modal-stars">
         <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span><span class="star" data-v="6">★</span><span class="star" data-v="7">★</span><span class="star" data-v="8">★</span><span class="star" data-v="9">★</span><span class="star" data-v="10">★</span>
       </div>
-      <div class="modal-section-title">Formato</div>
+      <div class="modal-section-title">Formato (puedes elegir varios)</div>
       <div class="fmt-sel" id="modal-fmt">
         <button class="fmt-btn" data-fmt="4K">4K UHD</button>
         <button class="fmt-btn" data-fmt="Bluray">Blu-ray</button>
         <button class="fmt-btn" data-fmt="DVD">DVD</button>
         <button class="fmt-btn" data-fmt="Digital">Digital</button>
-        <button class="fmt-btn" data-fmt="">Sin formato</button>
       </div>
       <div class="modal-section-title">Estado</div>
       <div class="status-sel" id="modal-status">
@@ -727,7 +726,11 @@ async function openModal(movie,fromList='collection'){
   document.getElementById('modal-synopsis').textContent=meta.synopsis||movie.overview||'';
   // Stars, format, status, notes
   setStars(modalRating);
-  document.querySelectorAll('#modal-fmt .fmt-btn').forEach(b=>{b.className='fmt-btn';if(b.dataset.fmt===meta.format)b.className=`fmt-btn active-${meta.format}`;});
+  document.querySelectorAll('#modal-fmt .fmt-btn').forEach(b=>{
+    b.className='fmt-btn';
+    const formats=Array.isArray(meta.formats)?meta.formats:(meta.format?[meta.format]:[]);
+    if(b.dataset.fmt&&formats.includes(b.dataset.fmt))b.classList.add(`active-${b.dataset.fmt}`);
+  });
   document.querySelectorAll('#modal-status .status-btn').forEach(b=>{b.className='status-btn';if(b.dataset.status===meta.status)b.className=`status-btn active-${meta.status}`;});
   document.getElementById('modal-notes').value=meta.notes||'';
 
@@ -812,7 +815,7 @@ function setStars(v){modalRating=v;document.querySelectorAll('#modal-stars .star
 function saveModal(){
   if(!modalMovie)return;
   const id=modalMovie.id;
-  const format=document.querySelector('#modal-fmt .fmt-btn[class*="active-"]')?.dataset.fmt||'';
+  const formats=[...document.querySelectorAll('#modal-fmt .fmt-btn[class*="active-"]')].map(b=>b.dataset.fmt).filter(Boolean);
   const status=document.querySelector('#modal-status .status-btn[class*="active-"]')?.dataset.status||'pending';
   // Parse trailer — only update if input is visible (user can see and edit it)
   const trailerInput=document.getElementById('modal-trailer-input');
@@ -830,7 +833,7 @@ function saveModal(){
   }
   // If input is hidden, trailerKey stays as it was (already saved)
   if(!st.meta[id])st.meta[id]={};
-  Object.assign(st.meta[id],{rating:modalRating,format,status,notes:document.getElementById('modal-notes').value.trim(),trailerKey});
+  Object.assign(st.meta[id],{rating:modalRating,formats,notes:document.getElementById('modal-notes').value.trim(),trailerKey});
   save();renderAll();
   document.getElementById('movie-modal-overlay').style.display='none';
   toast('Guardado','✓');
@@ -838,7 +841,10 @@ function saveModal(){
 document.getElementById('modal-stars').addEventListener('mouseover',e=>{if(!e.target.dataset.v)return;document.querySelectorAll('#modal-stars .star').forEach(s=>s.classList.toggle('on',parseInt(s.dataset.v)<=parseInt(e.target.dataset.v)));});
 document.getElementById('modal-stars').addEventListener('mouseleave',()=>setStars(modalRating));
 document.getElementById('modal-stars').addEventListener('click',e=>{if(!e.target.dataset.v)return;const v=parseInt(e.target.dataset.v);setStars(modalRating===v?0:v);});
-document.getElementById('modal-fmt').addEventListener('click',e=>{const b=e.target.closest('.fmt-btn');if(!b)return;document.querySelectorAll('#modal-fmt .fmt-btn').forEach(x=>x.className='fmt-btn');if(b.dataset.fmt)b.className=`fmt-btn active-${b.dataset.fmt}`;});
+document.getElementById('modal-fmt').addEventListener('click',e=>{
+  const b=e.target.closest('.fmt-btn');if(!b||!b.dataset.fmt)return;
+  b.classList.toggle(`active-${b.dataset.fmt}`);
+});
 document.getElementById('modal-status').addEventListener('click',e=>{const b=e.target.closest('.status-btn');if(!b)return;document.querySelectorAll('#modal-status .status-btn').forEach(x=>x.className='status-btn');b.className=`status-btn active-${b.dataset.status}`;});
 document.getElementById('modal-cancel').onclick=()=>document.getElementById('movie-modal-overlay').style.display='none';
 document.getElementById('modal-save').onclick=saveModal;
@@ -850,13 +856,14 @@ function makeCard(movie,fromList='collection'){
   const meta=st.meta[movie.id]||{};
   const div=document.createElement('div');div.className='mcard';div.style.animation='fadeIn .3s ease both';
   const ps=getPosterSrc(movie);
+  const formats=Array.isArray(meta.formats)?meta.formats:(meta.format?[meta.format]:[]);
   const fmtMap={'4K':'fmt-4k','Bluray':'fmt-bluray','DVD':'fmt-dvd','Digital':'fmt-digital'};
   const statusMap={'seen':'status-seen','pending':'status-pending'};
   const year=movie.release_date?movie.release_date.slice(0,4):'';
   const stars=meta.rating?'★'.repeat(Math.round(meta.rating/2))+'☆'.repeat(5-Math.round(meta.rating/2)):'';
   div.innerHTML=`
     ${ps?`<img class="mcard-poster" src="${ps}" alt="" loading="lazy">`:'<div class="mcard-poster-ph">🎬</div>'}
-    ${meta.format?`<div class="mcard-fmt"><span class="${fmtMap[meta.format]||''}">${meta.format}</span></div>`:''}
+    ${formats.length?`<div class="mcard-fmt">${formats.map(f=>`<span class="${fmtMap[f]||''}">${f}</span>`).join('')}</div>`:''}
     ${meta.status?`<div class="mcard-status"><div class="status-dot ${statusMap[meta.status]||''}"></div></div>`:''}
     <div class="mcard-body">
       <div class="mcard-title">${movie.title}</div>
@@ -875,8 +882,11 @@ function buildColFilters(){
   const genresInCol=new Set();
   st.collection.forEach(m=>{
     const mg=st.meta[m.id]?.genres||[];
-    mg.forEach(g=>genresInCol.add(g));
-    (m.genre_ids||[]).forEach(id=>{if(GENRES_MAP[id])genresInCol.add(GENRES_MAP[id]);});
+    if(mg.length){
+      mg.forEach(g=>genresInCol.add(g));
+    } else {
+      (m.genre_ids||[]).forEach(id=>{if(GENRES_MAP[id])genresInCol.add(GENRES_MAP[id]);});
+    }
   });
   [...genresInCol].sort().forEach(g=>{
     const b=document.createElement('button');
@@ -915,7 +925,8 @@ function movieMatchesSearch(movie,q){
 
 function movieMatchesFilters(movie){
   const meta=st.meta[movie.id]||{};
-  if(activeFmtFilter&&meta.format!==activeFmtFilter)return false;
+  const formats=Array.isArray(meta.formats)?meta.formats:(meta.format?[meta.format]:[]);
+  if(activeFmtFilter&&!formats.includes(activeFmtFilter))return false;
   if(activeStatusFilter&&meta.status!==activeStatusFilter)return false;
   if(activeGenreFilters.size>0){
     const mg=new Set([...(meta.genres||[]),...(movie.genre_ids||[]).map(id=>GENRES_MAP[id]).filter(Boolean)]);
@@ -971,16 +982,36 @@ function renderStats(){
 document.getElementById('scan-btn').onclick=async()=>{
   const wrap=document.getElementById('barcode-wrap'),video=document.getElementById('barcode-video');
   if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;wrap.style.display='none';return;}
-  if(!('BarcodeDetector' in window)){toast('Tu navegador no soporta lectura de códigos de barras','⚠');return;}
+  if(!('BarcodeDetector' in window)){toast('Tu navegador no soporta lectura de códigos de barras. Prueba con Chrome en Android','⚠');return;}
   try{
-    barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    video.srcObject=barcodeStream;wrap.style.display='';
+    // Show wrap first so video element is visible before stream starts (needed on mobile)
+    wrap.style.display='';
+    barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+    video.srcObject=barcodeStream;
+    await video.play();
     const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
     const scan=setInterval(async()=>{
       if(!barcodeStream){clearInterval(scan);return;}
-      try{const codes=await detector.detect(video);if(codes.length){clearInterval(scan);barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;wrap.style.display='none';const code=codes[0].rawValue;toast(`Código: ${code}. Buscando...`,'📷');const results=await tmdbSearch(code);if(results.length)addToCollection(results[0]);else toast('No encontrado. Prueba buscar por título','⚠');}}catch(e){}
+      try{
+        const codes=await detector.detect(video);
+        if(codes.length){
+          clearInterval(scan);
+          barcodeStream.getTracks().forEach(t=>t.stop());
+          barcodeStream=null;wrap.style.display='none';
+          const code=codes[0].rawValue;
+          toast(`Código: ${code}. Buscando...`,'📷');
+          const results=await tmdbSearch(code);
+          if(results.length)addToCollection(results[0]);
+          else toast('No encontrado. Prueba buscar por título','⚠');
+        }
+      }catch(e){}
     },300);
-  }catch(e){toast('No se pudo acceder a la cámara','⚠');}
+  }catch(e){
+    wrap.style.display='none';
+    barcodeStream=null;
+    toast('No se pudo acceder a la cámara','⚠');
+    console.error(e);
+  }
 };
 
 // TABS
