@@ -786,7 +786,6 @@ async function openModal(movie,fromList='collection'){
       }
       // Trailer
       const trailer=(videos.results||[]).find(v=>v.site==='YouTube'&&v.type==='Trailer');
-      const trailer=(videos.results||[]).find(v=>v.site==='YouTube'&&v.type==='Trailer');
       if(trailer){
         // Only set if user hasn't already saved a manual trailer
         if(!st.meta[movie.id]?.trailerKey){
