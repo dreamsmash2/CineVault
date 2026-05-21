@@ -379,8 +379,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
         <button class="status-btn" data-status="seen">✓ Vista</button>
         <button class="status-btn" data-status="pending">⏳ Pendiente</button>
       </div>
-      <div class="modal-section-title">Prestada a</div>
-      <input type="text" class="modal-input" id="modal-loan" placeholder="Nombre...">
       <div class="modal-section-title">Notas personales</div>
       <textarea class="modal-textarea" id="modal-notes" placeholder="Opinión, edición especial..."></textarea>
       <div class="modal-actions">
@@ -817,18 +815,23 @@ function saveModal(){
   const id=modalMovie.id;
   const format=document.querySelector('#modal-fmt .fmt-btn[class*="active-"]')?.dataset.fmt||'';
   const status=document.querySelector('#modal-status .status-btn[class*="active-"]')?.dataset.status||'pending';
-  // Parse trailer URL
-  const trailerUrl=document.getElementById('modal-trailer-input').value.trim();
+  // Parse trailer — only update if input is visible (user can see and edit it)
+  const trailerInput=document.getElementById('modal-trailer-input');
   let trailerKey=st.meta[id]?.trailerKey||'';
-  if(trailerUrl){
-    const ytMatch=trailerUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if(ytMatch)trailerKey=ytMatch[1];
-    else if(trailerUrl.length===11)trailerKey=trailerUrl;
-  } else {
-    trailerKey='';
+  if(trailerInput.style.display!=='none'){
+    // Input visible — user may have typed a new URL or cleared it
+    const trailerUrl=trailerInput.value.trim();
+    if(trailerUrl){
+      const ytMatch=trailerUrl.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if(ytMatch)trailerKey=ytMatch[1];
+      else if(trailerUrl.length===11)trailerKey=trailerUrl;
+    } else {
+      trailerKey='';
+    }
   }
+  // If input is hidden, trailerKey stays as it was (already saved)
   if(!st.meta[id])st.meta[id]={};
-  Object.assign(st.meta[id],{rating:modalRating,format,status,loan:document.getElementById('modal-loan').value.trim(),notes:document.getElementById('modal-notes').value.trim(),trailerKey});
+  Object.assign(st.meta[id],{rating:modalRating,format,status,notes:document.getElementById('modal-notes').value.trim(),trailerKey});
   save();renderAll();
   document.getElementById('movie-modal-overlay').style.display='none';
   toast('Guardado','✓');
@@ -856,7 +859,6 @@ function makeCard(movie,fromList='collection'){
     ${ps?`<img class="mcard-poster" src="${ps}" alt="" loading="lazy">`:'<div class="mcard-poster-ph">🎬</div>'}
     ${meta.format?`<div class="mcard-fmt"><span class="${fmtMap[meta.format]||''}">${meta.format}</span></div>`:''}
     ${meta.status?`<div class="mcard-status"><div class="status-dot ${statusMap[meta.status]||''}"></div></div>`:''}
-    ${meta.loan?`<div class="mcard-loan">📤 ${meta.loan}</div>`:''}
     <div class="mcard-body">
       <div class="mcard-title">${movie.title}</div>
       <div class="mcard-year">${year}${movie.vote_average?` · ⭐${movie.vote_average.toFixed(1)}`:''}</div>
