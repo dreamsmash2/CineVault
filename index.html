@@ -725,11 +725,10 @@ async function openModal(movie,fromList='collection'){
   genres.slice(0,4).forEach(g=>chips.insertAdjacentHTML('beforeend',`<span class="chip genre">${g}</span>`));
   // Synopsis
   document.getElementById('modal-synopsis').textContent=meta.synopsis||movie.overview||'';
-  // Stars, format, status, loan, notes
+  // Stars, format, status, notes
   setStars(modalRating);
   document.querySelectorAll('#modal-fmt .fmt-btn').forEach(b=>{b.className='fmt-btn';if(b.dataset.fmt===meta.format)b.className=`fmt-btn active-${meta.format}`;});
   document.querySelectorAll('#modal-status .status-btn').forEach(b=>{b.className='status-btn';if(b.dataset.status===meta.status)b.className=`status-btn active-${meta.status}`;});
-  document.getElementById('modal-loan').value=meta.loan||'';
   document.getElementById('modal-notes').value=meta.notes||'';
 
   document.getElementById('modal-cast-section').innerHTML='';
