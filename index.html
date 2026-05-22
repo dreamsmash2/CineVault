@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#080810">
 <link rel="manifest" href="manifest-cv.json">
 <title>CineVault</title>
@@ -167,4 +167,657 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
 .kpi-v{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--red);line-height:1;}
 .kpi-l{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);margin-top:4px;}
 .stats-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.stats-bar-label{font-size:12px;color:var(--text2);min-width
+.stats-bar-label{font-size:12px;color:var(--text2);min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stats-bar-track{flex:2;height:6px;background:var(--ink4);border-radius:3px;overflow:hidden;}
+.stats-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--red-d),var(--red));transition:width .6s ease;}
+.stats-bar-val{font-size:10px;color:var(--red);min-width:20px;text-align:right;font-weight:500;}
+.stats-top-poster{width:32px;height:48px;border-radius:4px;object-fit:cover;flex-shrink:0;background:var(--ink4);}
+
+/* SETTINGS */
+.sblock{background:var(--ink3);border-radius:var(--r);border:1px solid var(--border);padding:1.2rem;margin-bottom:1rem;}
+.sblock p{font-size:13px;color:var(--text3);font-style:italic;margin-bottom:1rem;line-height:1.65;font-family:'Crimson Pro',serif;}
+.io-row{display:flex;gap:8px;flex-wrap:wrap;}
+.danger-zone{background:linear-gradient(135deg,#130606,var(--ink3));border-color:rgba(230,57,70,.3);}
+.gdrive-block{background:linear-gradient(135deg,#0a1a0e,#0d2010);border:1px solid #1e5c2a;border-radius:var(--r);padding:1.2rem;margin-bottom:1rem;}
+.gdrive-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.gdrive-dot.connected{background:var(--green);box-shadow:0 0 6px var(--green);}
+.gdrive-dot.disconnected{background:var(--text4);}
+.gdrive-status{display:flex;align-items:center;gap:10px;margin-bottom:.8rem;}
+.gdrive-status-text{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;}
+.gdrive-status-text.connected{color:var(--green);}
+.gdrive-status-text.disconnected{color:var(--text4);}
+.gdrive-info{font-size:12px;color:var(--text3);font-style:italic;margin-bottom:.8rem;line-height:1.6;font-family:'Crimson Pro',serif;}
+.gdrive-setup{background:var(--ink3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;margin-bottom:.8rem;}
+.gdrive-setup p{font-size:12px;color:var(--text3);margin-bottom:6px;line-height:1.6;}
+.gdrive-setup input{font-family:'DM Sans',sans-serif;font-size:13px;width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--ink2);color:var(--text);outline:none;margin-top:4px;}
+.gdrive-setup input:focus{border-color:var(--green);}
+.gdrive-setup input::placeholder{color:var(--text4);}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(1.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 20px;font-size:12px;font-weight:500;color:var(--text);z-index:300;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.5);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* WELCOME */
+.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:250;backdrop-filter:blur(10px);}
+.welcome-box{background:var(--ink2);border:1px solid var(--border2);border-radius:16px;padding:2rem 1.5rem;text-align:center;max-width:380px;width:90%;}
+.welcome-box h1{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:.1em;background:linear-gradient(135deg,#fff,var(--gold),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;}
+.welcome-box p{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text3);margin-bottom:1.5rem;line-height:1.6;}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text4);}
+.empty-state .icon{font-size:48px;margin-bottom:.75rem;opacity:.4;}
+.empty-state p{font-size:14px;font-family:'Crimson Pro',serif;font-style:italic;}
+
+/* CAST */
+.cast-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:.5rem;}
+.cast-scroll::-webkit-scrollbar{height:3px;}
+.cast-item{flex-shrink:0;text-align:center;width:60px;}
+.cast-photo{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--ink4);margin:0 auto 4px;}
+.cast-name{font-size:9px;color:var(--text3);line-height:1.2;}
+
+/* TRAILER PLAYER */
+.trailer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.trailer-box{position:relative;width:90%;max-width:800px;}
+.trailer-box iframe{width:100%;aspect-ratio:16/9;border:none;border-radius:10px;display:block;}
+.trailer-close{position:absolute;top:-40px;right:0;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;opacity:.8;transition:opacity .2s;}
+.trailer-close:hover{opacity:1;}
+
+.scan-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(76,201,240,.1);border:1px solid rgba(76,201,240,.25);border-radius:6px;padding:8px 14px;font-size:11px;font-weight:500;color:var(--blue);cursor:pointer;margin-bottom:.75rem;transition:all .2s;}
+.scan-btn:hover{background:rgba(76,201,240,.18);}
+
+/* Contenedor optimizado para el escaneo del código de barras */
+.barcode-wrap{display:none;margin-bottom:1rem;border-radius:var(--r);overflow:hidden;border:1px solid var(--border2);background:#000;position:relative;width:100%;height:280px;}
+.barcode-wrap video{width:100% !important;height:100% !important;display:block;object-fit:cover;position:absolute;top:0;left:0;}
+.barcode-wrap canvas{display:none !important;}
+
+/* POSTER UPLOAD */
+.poster-upload-area{width:100%;aspect-ratio:2/3;max-width:120px;border:2px dashed var(--border2);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s;color:var(--text4);font-size:11px;text-align:center;gap:4px;}
+.poster-upload-area:hover{border-color:var(--gold);}
+.poster-upload-area img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--ink2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--red-d);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<div class="welcome-overlay" id="welcome-overlay" style="display:none;">
+  <div class="welcome-box">
+    <h1>CineVault</h1>
+    <p>Tu colección personal de cine. Busca películas automáticamente o añádelas manualmente.</p>
+    <button class="btn primary" id="welcome-start" style="width:100%;padding:12px;">🎬 Comenzar</button>
+  </div>
+</div>
+
+<header class="hdr">
+  <div><div class="logo">CineVault<span>colección personal</span></div></div>
+  <div class="hdr-stats">
+    <div class="hstat"><div class="hstat-v" id="s-total">0</div><div class="hstat-l">películas</div></div>
+    <div class="hstat"><div class="hstat-v" id="s-seen">0</div><div class="hstat-l">vistas</div></div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="collection">🎬 Colección</button>
+  <button class="tab" data-tab="wishlist">🔖 Pendientes</button>
+  <button class="tab" data-tab="stats">📊 Stats</button>
+  <button class="tab" data-tab="settings">⚙️ Datos</button>
+</nav>
+
+<div class="main">
+
+  <div id="tab-collection">
+    <div class="search-wrap" style="margin-top:.5rem;">
+      <input type="text" class="search-input" id="search-input" placeholder="🔍  Buscar en TMDB para añadir..." autocomplete="off">
+      <div class="search-results" id="search-results" style="display:none;"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;">
+      <div class="add-manual-btn" id="add-manual-col-btn">✏️ Añadir manualmente</div>
+      <div class="scan-btn" id="scan-btn">📷 Código de barras</div>
+    </div>
+    
+    <div class="barcode-wrap" id="barcode-wrap"></div>
+    
+    <input type="text" class="col-search-input" id="col-search-input" placeholder="🔎  Buscar en mi colección: título, director, actor, año...">
+    <div class="filters" id="col-filters"></div>
+    <div class="sec">Mi colección <span class="badge badge-red" id="b-col">0</span></div>
+    <div class="movie-grid" id="col-grid"></div>
+  </div>
+
+  <div id="tab-wishlist" style="display:none;">
+    <div class="search-wrap" style="margin-top:.5rem;">
+      <input type="text" class="search-input" id="wish-search-input" placeholder="🔍  Buscar en TMDB para añadir a pendientes..." autocomplete="off">
+      <div class="search-results" id="wish-search-results" style="display:none;"></div>
+    </div>
+    <div class="add-manual-btn" id="add-manual-wish-btn">✏️ Añadir manualmente</div>
+    <div class="sec">Quiero ver <span class="badge badge-blue" id="b-wish">0</span></div>
+    <div class="movie-grid" id="wish-grid"></div>
+  </div>
+
+  <div id="tab-stats" style="display:none;">
+    <div class="sec" style="margin-top:.5rem;">Resumen</div>
+    <div class="stats-kpi" id="stats-kpi"></div>
+    <div class="sec">Por formato</div><div id="stats-fmt"></div>
+    <div class="sec">Por género</div><div id="stats-genre"></div>
+    <div class="sec">Mejor valoradas</div><div id="stats-top"></div>
+    <div class="sec">Por director</div><div id="stats-director"></div>
+  </div>
+
+  <div id="tab-settings" style="display:none;">
+    <div class="gdrive-block" style="margin-top:.5rem;">
+      <div class="gdrive-status">
+        <div class="gdrive-dot disconnected" id="gd-dot"></div>
+        <span class="gdrive-status-text disconnected" id="gd-status-text">Google Drive — No conectado</span>
+      </div>
+      <p class="gdrive-info">Sincroniza tu colección con Google Drive para acceder desde cualquier dispositivo. Usa el mismo Client ID que en Game Picker.</p>
+      <div class="gdrive-setup" id="gd-setup">
+        <p>Introduce tu Client ID de Google OAuth 2.0 (el mismo que en Game Picker):</p>
+        <input type="text" id="gd-client-id-input" placeholder="xxxxxxxx.apps.googleusercontent.com" autocomplete="off">
+      </div>
+      <div class="io-row" style="margin-top:.6rem;">
+        <button class="btn sm" id="gd-connect-btn" style="color:var(--green);border-color:var(--green-d);">Conectar con Google</button>
+        <button class="btn sm" id="gd-save-btn" style="display:none;color:var(--green);border-color:var(--green-d);">☁ Guardar en Drive</button>
+        <button class="btn sm" id="gd-load-btn" style="display:none;color:var(--blue);border-color:var(--blue-d);">⬇ Cargar desde Drive</button>
+        <button class="btn sm ghost" id="gd-disconnect-btn" style="display:none;">Desconectar</button>
+      </div>
+    </div>
+    <div class="sblock">
+      <div class="sec">Copia de seguridad local</div>
+      <p>Exporta tu colección en JSON o importa un backup anterior.</p>
+      <div class="io-row">
+        <button class="btn" id="btn-export">⬇ Exportar JSON</button>
+        <button class="btn" id="btn-import-t">⬆ Importar JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;">
+      </div>
+    </div>
+    <div class="sblock danger-zone">
+      <div class="sec" style="color:var(--red);">⚠ Zona de peligro</div>
+      <p style="color:#c07070;">Borra toda la colección. No se puede deshacer.</p>
+      <button class="btn sm" id="btn-nuke" style="color:var(--red);border-color:rgba(230,57,70,.3);">✕ Borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="movie-modal-overlay" style="display:none;">
+  <div class="movie-modal">
+    <div class="modal-hero" id="modal-hero">
+      <div id="modal-backdrop-wrap" style="width:100%;height:100%;background:var(--ink4);"></div>
+      <div class="modal-hero-overlay"></div>
+      <div class="modal-hero-content">
+        <div id="modal-poster-wrap"></div>
+        <div>
+          <div class="modal-title-text" id="modal-title"></div>
+          <div class="modal-original" id="modal-original"></div>
+          <div class="modal-year-dir" id="modal-year-dir"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="modal-tmdb-rating"></div>
+      <div class="modal-chips" id="modal-chips"></div>
+      <p class="modal-synopsis" id="modal-synopsis"></p>
+      <div id="modal-cast-section"></div>
+      <div class="modal-section-title">Trailer</div>
+      <div id="modal-trailer-btn"></div>
+      <input type="text" class="modal-input" id="modal-trailer-input" placeholder="Pega aquí el enlace de YouTube si no aparece automáticamente..." style="margin-bottom:.5rem;font-size:12px;">
+      <div class="modal-section-title">Mi puntuación</div>
+      <div class="star-row" id="modal-stars">
+        <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span><span class="star" data-v="6">★</span><span class="star" data-v="7">★</span><span class="star" data-v="8">★</span><span class="star" data-v="9">★</span><span class="star" data-v="10">★</span>
+      </div>
+      <div class="modal-section-title">Formato (puedes elegir varios)</div>
+      <div class="fmt-sel" id="modal-fmt">
+        <button class="fmt-btn" data-fmt="4K">4K UHD</button>
+        <button class="fmt-btn" data-fmt="Bluray">Blu-ray</button>
+        <button class="fmt-btn" data-fmt="DVD">DVD</button>
+        <button class="fmt-btn" data-fmt="Digital">Digital</button>
+      </div>
+      <div class="modal-section-title">Estado</div>
+      <div class="status-sel" id="modal-status">
+        <button class="status-btn" data-status="seen">✓ Vista</button>
+        <button class="status-btn" data-status="pending">⏳ Pendiente</button>
+      </div>
+      <div class="modal-section-title">Notas personales</div>
+      <textarea class="modal-textarea" id="modal-notes" placeholder="Opinión, edición especial..."></textarea>
+      <div class="modal-actions">
+        <button class="btn danger sm" id="modal-delete">Eliminar</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost sm" id="modal-cancel">Cancelar</button>
+          <button class="btn primary sm" id="modal-save">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="manual-modal-overlay" style="display:none;">
+  <div class="movie-modal" style="max-width:480px;">
+    <div class="modal-body" style="padding-top:1.5rem;">
+      <div style="display:flex;gap:14px;margin-bottom:1rem;align-items:flex-start;">
+        <div>
+          <div class="modal-section-title" style="margin-top:0;">Portada</div>
+          <div class="poster-upload-area" id="manual-poster-area">
+            <span style="font-size:24px;">🎬</span>
+            <span>Subir portada</span>
+          </div>
+          <input type="file" id="manual-poster-file" accept="image/*" style="display:none;">
+        </div>
+        <div style="flex:1;">
+          <div class="modal-section-title" style="margin-top:0;">Título</div>
+          <input type="text" class="modal-input" id="manual-title" placeholder="Título de la película">
+          <div class="modal-section-title">Título original</div>
+          <input type="text" class="modal-input" id="manual-original" placeholder="Original title">
+          <div class="modal-section-title">Año</div>
+          <input type="text" class="modal-input" id="manual-year" placeholder="2024">
+        </div>
+      </div>
+      <div class="modal-section-title">Director</div>
+      <input type="text" class="modal-input" id="manual-director" placeholder="Nombre del director">
+      <div class="modal-section-title">Reparto principal</div>
+      <input type="text" class="modal-input" id="manual-cast" placeholder="Actor 1, Actor 2, Actor 3...">
+      <div class="modal-section-title">Géneros (separados por coma)</div>
+      <input type="text" class="modal-input" id="manual-genres" placeholder="Drama, Thriller, Ciencia Ficción...">
+      <div class="modal-section-title">Sinopsis</div>
+      <textarea class="modal-textarea" id="manual-synopsis" placeholder="Descripción de la película..."></textarea>
+      <div class="modal-section-title">Trailer (enlace YouTube)</div>
+      <input type="text" class="modal-input" id="manual-trailer" placeholder="https://www.youtube.com/watch?v=...">
+      <div class="modal-actions">
+        <button class="btn ghost sm" id="manual-cancel">Cancelar</button>
+        <button class="btn primary sm" id="manual-save">Añadir a colección</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="trailer-overlay" id="trailer-overlay" style="display:none;" onclick="closeTrailer(event)">
+  <div class="trailer-box">
+    <button class="trailer-close" onclick="closeTrailerBtn()">✕</button>
+    <iframe id="trailer-iframe" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+<script>
+const TMDB_KEY='2e4d24fbeadc5db6ea0d1f3e56b99dd5';
+const TMDB='https://api.themoviedb.org/3';
+const IMG='https://image.tmdb.org/t/p/';
+const KEY='cinevault_v2';
+const IMG_KEY='cinevault_imgs';
+const GD_FILENAME='cinevault_backup.json';
+
+const GENRES_MAP={
+  28:'Acción',12:'Aventura',16:'Animación',35:'Comedia',80:'Crimen',
+  99:'Documental',18:'Drama',10751:'Familia',14:'Fantasía',36:'Historia',
+  27:'Terror',10402:'Música',9648:'Misterio',10749:'Romance',878:'Ciencia ficción',
+  10770:'Película de TV',53:'Thriller',10752:'Bélica',37:'Western'
+};
+
+let st={collection:[],wishlist:[],meta:{}};
+let imgs={};
+let gd={clientId:'',accessToken:'',fileId:'',expiresAt:0};
+let activeTab='collection';
+let colSearchQ='';
+let activeFmtFilter='';
+let activeStatusFilter='';
+let activeGenreFilters=new Set();
+let currentViewMovieId=null;
+let manualTarget='collection';
+let manualPosterData=null;
+let scannerIsRunning=false;
+
+// STORAGE
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){} }
+function load(){
+  try{
+    let data=localStorage.getItem(KEY);
+    if(data){
+      let p=JSON.parse(data);
+      if(p.collection) st.collection=p.collection;
+      if(p.wishlist) st.wishlist=p.wishlist;
+      if(p.meta) st.meta=p.meta;
+    }
+  }catch(e){}
+}
+function saveImgs(){ try{localStorage.setItem(IMG_KEY,JSON.stringify(imgs));}catch(e){} }
+function loadImgs(){ try{let data=localStorage.getItem(IMG_KEY);if(data)imgs=JSON.parse(data);}catch(e){} }
+
+// GDRIVE CREDENTIALS
+function saveGD(){ localStorage.setItem('cv_gd',JSON.stringify(gd)); }
+function loadGD(){ try{let d=localStorage.getItem('cv_gd');if(d){let p=JSON.parse(d);gd=Object.assign(gd,p);}}catch(e){} }
+
+async function cachePoster(movie){
+  if(!movie.poster_path||movie._manual||imgs[movie.poster_path]) return;
+  try{
+    let url=`${IMG}w185${movie.poster_path}`;
+    let resp=await fetch(url);
+    let blob=await resp.blob();
+    let reader=new FileReader();
+    reader.onloadend=()=>{ imgs[movie.poster_path]=reader.result;saveImgs(); };
+    reader.readAsDataURL(blob);
+  }catch(e){}
+}
+
+// API CALLS
+async function tmdbSearch(q){
+  let resp=await fetch(`${TMDB}/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}&language=es-ES`);
+  return await resp.json();
+}
+async function tmdbDetail(id){
+  let [d,c,v]=await Promise.all([
+    fetch(`${TMDB}/movie/${id}?api_key=${TMDB_KEY}&language=es-ES`).then(r=>r.json()),
+    fetch(`${TMDB}/movie/${id}/credits?api_key=${TMDB_KEY}&language=es-ES`).then(r=>r.json()),
+    fetch(`${TMDB}/movie/${id}/videos?api_key=${TMDB_KEY}&language=es-ES`).then(r=>r.json())
+  ]);
+  return {detail:d,credits:c,videos:v};
+}
+async function tmdbByBarcode(barcode){
+  let url=`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(barcode)}&language=es-ES`;
+  let r=await fetch(url).then(res=>res.json());
+  if(r.results&&r.results.length) return r.results[0];
+  return null;
+}
+
+// TABS
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    t.classList.add('active');
+    activeTab=t.dataset.tab;
+    ['collection','wishlist','stats','settings'].forEach(id=>{
+      document.getElementById(`tab-${id}`).style.display=(id===activeTab)?'block':'none';
+    });
+    if(activeTab==='stats') renderStats();
+    if(scannerIsRunning) stopScanner();
+  };
+});
+
+// SEARCH AUTOCOMPLETE
+function setupSearch(inputInst,resultsInst,isWish=false){
+  let t;
+  inputInst.oninput=()=>{
+    clearTimeout(t);
+    let q=inputInst.value.trim();
+    if(!q){ resultsInst.style.display='none';return; }
+    t=setTimeout(async()=>{
+      resultsInst.innerHTML='<div class="sr-loading">Buscando...</div>';
+      resultsInst.style.display='block';
+      try{
+        let res=await tmdbSearch(q);
+        resultsInst.innerHTML='';
+        if(!res.results||!res.results.length){ resultsInst.innerHTML='<div class="sr-loading">No se encontraron películas.</div>';return; }
+        res.results.slice(0,6).forEach(m=>{
+          let item=document.createElement('div');
+          item.className='sr-item';
+          let y=m.release_date?m.release_date.substring(0,4):'----';
+          let posterHtml=m.poster_path?`<img class="sr-poster" src="${IMG}w92${m.poster_path}">`:`<div class="sr-poster-ph">🎬</div>`;
+          item.innerHTML=`
+            ${posterHtml}
+            <div class="sr-info">
+              <div class="sr-title">${m.title}</div>
+              <div class="sr-meta">${y} · ⭐ ${m.vote_average?m.vote_average.toFixed(1):'0.0'}</div>
+            </div>
+          `;
+          item.onclick=async()=>{
+            resultsInst.style.display='none';
+            inputInst.value='';
+            if(isWish){
+              addToWishlist(m);
+            }else{
+              if(st.collection.find(x=>x.id===m.id)){ toast('Ya la tienes en tu colección','⚠');return; }
+              st.collection.push({id:m.id,title:m.title,original_title:m.original_title||'',poster_path:m.poster_path||'',release_date:m.release_date||'',vote_average:m.vote_average||0,genre_ids:m.genre_ids||[],_manual:false});
+              if(!st.meta[m.id])st.meta[m.id]={rating:0,formats:['Bluray'],status:'seen',loan:'',notes:'',director:'',cast:'',genres:[]};
+              save();buildColFilters();renderAll();
+              toast(`${m.title} añadida`,'🎬');
+              cachePoster(m);
+            };
+          };
+          resultsInst.appendChild(item);
+        });
+      }catch(e){ resultsInst.innerHTML='<div class="sr-loading">Error al buscar.</div>'; }
+    },400);
+  };
+}
+setupSearch(document.getElementById('search-input'),document.getElementById('search-results'),false);
+setupSearch(document.getElementById('wish-search-input'),document.getElementById('wish-search-results'),true);
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search-wrap')){
+    document.getElementById('search-results').style.display='none';
+    document.getElementById('wish-search-results').style.display='none';
+  }
+});
+
+// BARCODE SCANNER
+document.getElementById('scan-btn').onclick=()=>{
+  if(!scannerIsRunning) startScanner();
+  else stopScanner();
+};
+
+function startScanner(){
+  let wrap = document.getElementById('barcode-wrap');
+  wrap.innerHTML = '';
+  wrap.style.display = 'block';
+  
+  let btn = document.getElementById('scan-btn');
+  btn.textContent = '✕ Detener cámara';
+  btn.style.color = 'var(--red)';
+  btn.style.borderColor = 'rgba(230,57,70,.3)';
+  scannerIsRunning = true;
+
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: wrap,
+      constraints: {
+        facingMode: "environment"
+      }
+    },
+    decoder: {
+      readers: ["ean_reader", "ean_8_reader", "upc_reader"]
+    },
+    locate: true
+  }, function(err) {
+    if (err) {
+      toast("Error al abrir cámara: " + err, "❌");
+      stopScanner();
+      return;
+    }
+    
+    let video = wrap.querySelector('video');
+    if (video) {
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.setAttribute('muted', 'true');
+      video.muted = true;
+      video.play().catch(()=>{});
+    }
+    
+    Quagga.start();
+  });
+}
+
+function stopScanner(){
+  try{Quagga.stop();}catch(e){}
+  let wrap = document.getElementById('barcode-wrap');
+  wrap.style.display = 'none';
+  wrap.innerHTML = '';
+  
+  let btn = document.getElementById('scan-btn');
+  btn.textContent = '📷 Código de barras';
+  btn.style.color = 'var(--blue)';
+  btn.style.borderColor = 'rgba(76,201,240,.25)';
+  scannerIsRunning = false;
+}
+
+let lastBarcode='';
+let lastBarcodeT=0;
+Quagga.onDetected(async(data)=>{
+  let code=data.codeResult.code;
+  if(!code) return;
+  let now=Date.now();
+  if(code===lastBarcode && (now-lastBarcodeT)<3000) return;
+  lastBarcode=code;
+  lastBarcodeT=now;
+  
+  navigator.vibrate?.(100);
+  toast(`Código detectado: ${code}`,'🔎');
+  stopScanner();
+
+  try{
+    let movie=await tmdbByBarcode(code);
+    if(movie){
+      if(st.collection.find(x=>x.id===movie.id)){ toast(`"${movie.title}" ya está en tu colección`,'⚠');return; }
+      st.collection.push({id:movie.id,title:movie.title,original_title:movie.original_title||'',poster_path:movie.poster_path||'',release_date:movie.release_date||'',vote_average:movie.vote_average||0,genre_ids:movie.genre_ids||[],_manual:false});
+      if(!st.meta[movie.id])st.meta[movie.id]={rating:0,formats:['Bluray'],status:'seen',loan:'',notes:'',director:'',cast:'',genres:[]};
+      save();buildColFilters();renderAll();
+      toast(`Añadida: ${movie.title}`,'✅');
+      cachePoster(movie);
+    }else{
+      toast(`No encontrada en TMDB. Abriendo formulario manual...`,'✏');
+      openManualModal('collection');
+    }
+  }catch(e){
+    toast('Error buscando código de barras','❌');
+  }
+});
+
+async function addToWishlist(movie){
+  if(st.wishlist.find(m=>m.id===movie.id)){toast('Ya está en pendientes','⚠');return;}
+  if(st.collection.find(m=>m.id===movie.id)){toast('Ya la tienes en tu colección','⚠');return;}
+  st.wishlist.push({id:movie.id,title:movie.title,original_title:movie.original_title||'',poster_path:movie.poster_path||'',release_date:movie.release_date||'',vote_average:movie.vote_average||0,genre_ids:movie.genre_ids||[],_manual:false});
+  if(!st.meta[movie.id])st.meta[movie.id]={rating:0,format:'',status:'pending',loan:'',notes:'',director:'',cast:'',genres:[]};
+  save();cachePoster(movie).then(()=>renderAll());renderAll();
+  toast(`${movie.title} añadida a pendientes`,'🔖');
+}
+
+function removeMovie(id,fromList){
+  if(fromList==='collection')st.collection=st.collection.filter(m=>m.id!==id);
+  else st.wishlist=st.wishlist.filter(m=>m.id!==id);
+  save();buildColFilters();renderAll();
+}
+
+// MANUAL ADD
+function openManualModal(target){
+  manualTarget=target;manualPosterData=null;
+  document.getElementById('manual-title').value='';
+  document.getElementById('manual-original').value='';
+  document.getElementById('manual-year').value='';
+  document.getElementById('manual-director').value='';
+  document.getElementById('manual-cast').value='';
+  document.getElementById('manual-genres').value='';
+  document.getElementById('manual-synopsis').value='';
+  const area=document.getElementById('manual-poster-area');
+  area.innerHTML='<span style="font-size:24px;">🎬</span><span>Subir portada</span>';
+  document.getElementById('manual-modal-overlay').style.display='flex';
+}
+
+document.getElementById('manual-poster-file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();img.onload=()=>{
+      const c=document.createElement('canvas');
+      const MAX=400;const scale=Math.min(MAX/img.width,MAX/img.height,1);
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      manualPosterData=c.toDataURL('image/jpeg',0.75);
+      document.getElementById('manual-poster-area').innerHTML=`<img src="${manualPosterData}">`;
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+});
+
+document.getElementById('manual-poster-area').onclick=()=>document.getElementById('manual-poster-file').click();
+document.getElementById('add-manual-col-btn').onclick=()=>openManualModal('collection');
+document.getElementById('add-manual-wish-btn').onclick=()=>openManualModal('wishlist');
+document.getElementById('manual-cancel').onclick=()=>document.getElementById('manual-modal-overlay').style.display='none';
+
+document.getElementById('manual-save').onclick=()=>{
+  const title=document.getElementById('manual-title').value.trim();
+  if(!title){toast('El título es obligatorio','⚠');return;}
+  const id='m_'+Date.now();
+  const year=document.getElementById('manual-year').value.trim();
+  const original=document.getElementById('manual-original').value.trim();
+  const director=document.getElementById('manual-director').value.trim();
+  const castStr=document.getElementById('manual-cast').value.trim();
+  const genresStr=document.getElementById('manual-genres').value.trim();
+  const synopsis=document.getElementById('manual-synopsis').value.trim();
+  const trailer=document.getElementById('manual-trailer').value.trim();
+
+  const genresArr=genresStr?genresStr.split(',').map(g=>g.trim()).filter(Boolean):[];
+
+  if(manualPosterData){ imgs[id]=manualPosterData;saveImgs(); }
+
+  const mObj={id,title,original_title:original,release_date:year?`${year}-01-01`:'',vote_average:0,genre_ids:[],_manual:true};
+  
+  if(manualTarget==='collection'){
+    st.collection.push(mObj);
+    st.meta[id]={rating:0,formats:['Bluray'],status:'seen',loan:'',notes:synopsis,director,cast:castStr,genres:genresArr,trailerKey:extractYT(trailer)};
+  }else{
+    st.wishlist.push(mObj);
+    st.meta[id]={rating:0,formats:[],status:'pending',loan:'',notes:synopsis,director,cast:castStr,genres:genresArr,trailerKey:extractYT(trailer)};
+  }
+  save();buildColFilters();renderAll();
+  document.getElementById('manual-modal-overlay').style.display='none';
+  toast('Película guardada','✏');
+};
+
+function extractYT(url){
+  if(!url)return '';
+  let m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^#\&\?]{11})/);
+  return m?m[1]:'';
+}
+
+function openManualEdit(movie){
+  manualTarget='edit';
+  const meta=st.meta[movie.id]||{};
+  document.getElementById('manual-title').value=movie.title;
+  document.getElementById('manual-original').value=movie.original_title||'';
+  document.getElementById('manual-year').value=movie.release_date?movie.release_date.substring(0,4):'';
+  document.getElementById('manual-director').value=meta.director||'';
+  document.getElementById('manual-cast').value=meta.cast||'';
+  document.getElementById('manual-genres').value=(meta.genres||[]).join(', ');
+  document.getElementById('manual-synopsis').value=meta.notes||'';
+  document.getElementById('manual-trailer').value=meta.trailerKey?`https://www.youtube.com/watch?v=${meta.trailerKey}`:'';
+  
+  const area=document.getElementById('manual-poster-area');
+  let pSrc=movie._manual?imgs[movie.id]:(movie.poster_path?imgs[movie.poster_path]||`${IMG}w185${movie.poster_path}`:null);
+  if(pSrc) area.innerHTML=`<img src="${pSrc}">`;
+  else area.innerHTML='<span style="font-size:24px;">🎬</span><span>Subir portada</span>';
+  
+  manualPosterData=movie._manual?imgs[movie.id]:null;
+  document.getElementById('manual-modal-overlay').style.display='flex';
+
+  document.getElementById('manual-save').onclick=()=>{
+    movie.title=document.getElementById('manual-title').value.trim();
+    movie.original_title=document.getElementById('manual-original').value.trim();
+    let y=document.getElementById('manual-year').value.trim();
+    movie.release_date=y?`${y}-01-01`:'';
+    meta.director=document.getElementById('manual-director').value.trim();
+    meta.cast=document.getElementById('manual-cast').value.trim();
+    let gStr=document.getElementById('manual-genres').value.trim();
+    meta.genres=gStr?gStr.split(',').map(g=>g.trim()).filter(Boolean):[];
+    meta.notes=document.getElementById('manual-synopsis').value.trim();
+    meta.trailerKey=extractYT(document.getElementById('manual-trailer').value.trim());
+
+    if(manualPosterData && movie._manual){ imgs[movie.id]=manualPosterData;saveImgs(); }
+
+    save();buildColFilters();renderAll();
+    document.getElementById('manual-modal-overlay').style.display='none';
+    openMovieModal(movie.id);
+  };
+}
+
+// FILTERS SYSTEM
+function buildColFilters(){
+  let s=new Set();
+  st.collection.forEach(m=>{
+    let meta=st.meta[m.id]||{};
+    (meta.genres||[]).forEach(g=>s.add(g
