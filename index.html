@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#080810">
 <link rel="manifest" href="manifest-cv.json">
@@ -101,6 +102,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
 .mcard-status{position:absolute;top:6px;left:6px;}
 .status-dot{width:7px;height:7px;border-radius:50%;}
 .status-seen{background:var(--green);box-shadow:0 0 6px var(--green);}
+.status-pending覆{background:var(--gold);box-shadow:0 0 6px var(--gold);}
 .status-pending{background:var(--gold);box-shadow:0 0 6px var(--gold);}
 .mcard-loan{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(230,57,70,.8),transparent);padding:4px 6px 2px;font-size:8px;color:#fff;font-weight:500;}
 
@@ -373,7 +375,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
         <button class="status-btn" data-status="seen">✓ Vista</button>
         <button class="status-btn" data-status="pending">⏳ Pendiente</button>
       </div>
-      <div class="modal-section-title">Notas personales</div>
+      <div class="modal-section-title">Notes personales</div>
       <textarea class="modal-textarea" id="modal-notes" placeholder="Opinión, edición especial..."></textarea>
       <div class="modal-actions">
         <button class="btn danger sm" id="modal-delete">Eliminar</button>
@@ -825,9 +827,9 @@ function movieMatchesFilters(m){
   const meta=st.meta[m.id];if(!meta)return !activeFmtFilter&&!activeStatusFilter&&!activeGenreFilters.size;
   const formats=Array.isArray(meta.formats)?meta.formats:(meta.format?[meta.format]:[]);
   if(activeFmtFilter&&!formats.includes(activeFmtFilter))return false;
-  if(activeStatusFilter&&meta.status!====activeStatusFilter)return false;
+  if(activeStatusFilter&&meta.status!==activeStatusFilter)return false;
   if(activeGenreFilters.size>0){
-    const mg=new Set([...(meta.genres||[]),...(movie.genre_ids||[]).map(id=>GENRES_MAP[id]).filter(Boolean)]);
+    const mg=new Set([...(meta.genres||[]),...(m.genre_ids||[]).map(id=>GENRES_MAP[id]).filter(Boolean)]);
     if(![...activeGenreFilters].every(g=>mg.has(g)))return false;
   }
   return true;
@@ -1227,7 +1229,7 @@ document.getElementById('welcome-start').onclick=()=>{
   localStorage.setItem('cv_welcomed','1');
 };
 
-// BARCODE SCANNER SETUP (STUB USING CHROME BARCODE DETECTOR OR EXTERNAL)
+// BARCODE SCANNER SETUP
 let scanStream=null;
 const scanBtn=document.getElementById('scan-btn');
 scanBtn.onclick=async()=>{
@@ -1238,7 +1240,6 @@ scanBtn.onclick=async()=>{
     document.getElementById('barcode-video').srcObject=scanStream;
     wrap.style.display='block';scanBtn.textContent='✕ Cerrar cámara';scanBtn.style.color='var(--red)';
     toast('Apunta a un código de barras','📷');
-    // Simulated scan fallback for testing if no BarcodeDetector native API
     if(!('BarcodeDetector' in window)){
       setTimeout(()=>{
         if(wrap.style.display==='block'){
@@ -1255,7 +1256,7 @@ function stopScan(){
   scanBtn.textContent='📷 Código de barras';scanBtn.style.color='var(--blue)';
 }
 
-// GOOGLE DRIVE INTEGRATION (Saves in hidden appDataFolder)
+// GOOGLE DRIVE INTEGRATION
 const GD_FILENAME='cinevault_sync.json';
 let gd={clientId:'',accessToken:'',fileId:''};
 
@@ -1389,7 +1390,7 @@ document.getElementById('gd-disconnect-btn').onclick=()=>{
   toast('Google Drive desconectado','⚙');
 };
 
-// SERVICE WORKER FOR OFFLINE USE
+// SERVICE WORKER
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('sw-cv.js').catch(()=>{});
