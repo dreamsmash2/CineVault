@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- html5-qrcode library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -279,11 +279,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
       <div class="add-manual-btn" id="add-manual-col-btn">✏️ Añadir manualmente</div>
       <div class="scan-btn" id="scan-btn">📷 Código de barras</div>
     </div>
-    <div class="barcode-wrap" id="barcode-wrap" style="display:none;margin-bottom:1rem;border-radius:8px;overflow:hidden;border:1px solid var(--border2);background:#000;position:relative;">
-      <video id="barcode-video" autoplay playsinline muted style="width:100%;display:block;max-height:280px;object-fit:cover;"></video>
-      <canvas id="barcode-canvas" style="display:none;"></canvas>
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:2px solid rgba(230,57,70,.8);border-radius:4px;width:260px;height:100px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.4);"></div>
-      <div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:#fff;opacity:.8;">Enfoca el código de barras</div>
+    <div class="barcode-wrap" id="barcode-wrap" style="display:none;padding:10px;background:var(--ink3);">
+      <div id="barcode-reader" style="width:100%;"></div>
     </div>
     <input type="text" class="col-search-input" id="col-search-input" placeholder="🔎  Buscar en mi colección: título, director, actor, año...">
     <div class="filters" id="col-filters"></div>
@@ -987,88 +984,51 @@ function renderStats(){
 }
 
 // BARCODE
-// BARCODE SCANNER — native getUserMedia + ZXing lazy load
-let scanStream = null;
-let scanInterval = null;
+// BARCODE SCANNER
+let html5QrScanner = null;
 
-async function startScanner(){
+document.getElementById('scan-btn').onclick = function() {
   const wrap = document.getElementById('barcode-wrap');
-  const video = document.getElementById('barcode-video');
-  const btn = document.getElementById('scan-btn');
-
-  if(scanStream){
-    stopScanner();
+  if(wrap.style.display === 'block'){
+    cerrarEscaner();
     return;
   }
+  wrap.style.display = 'block';
+  toast('Iniciando cámara...','📷');
+  html5QrScanner = new Html5Qrcode('barcode-reader');
+  const config = {
+    fps: 15,
+    qrbox: function(w, h){ return {width: Math.floor(w*0.85), height: Math.floor(h*0.45)}; },
+    aspectRatio: 1.777778
+  };
+  html5QrScanner.start(
+    {facingMode:'environment'},
+    config,
+    async (code) => {
+      toast(`Código: ${code}. Buscando...`,'📷');
+      cerrarEscaner();
+      const results = await tmdbSearch(code);
+      if(results.length) addToCollection(results[0]);
+      else toast('No encontrado en TMDB. Prueba buscar por título','⚠');
+    },
+    () => {}
+  ).catch(err => {
+    console.error(err);
+    toast('Error al abrir la cámara','⚠');
+    wrap.style.display = 'none';
+  });
+};
 
-  try{
-    scanStream = await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:'environment'}}
-    });
-    video.srcObject = scanStream;
-    wrap.style.display = '';
-    btn.textContent = '⏹ Cerrar cámara';
-    await new Promise(res=>{ video.onloadedmetadata=res; });
-    video.play();
-
-    // Load ZXing lazily
-    if(!window.ZXing){
-      await new Promise((res,rej)=>{
-        const s=document.createElement('script');
-        s.src='https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.3/umd/index.min.js';
-        s.onload=res; s.onerror=rej;
-        document.head.appendChild(s);
-      });
-    }
-
-    const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
-      ZXing.BarcodeFormat.EAN_13,
-      ZXing.BarcodeFormat.EAN_8,
-      ZXing.BarcodeFormat.UPC_A,
-      ZXing.BarcodeFormat.UPC_E,
-      ZXing.BarcodeFormat.CODE_128,
-    ]);
-    const reader = new ZXing.BrowserMultiFormatReader(hints);
-    const canvas = document.getElementById('barcode-canvas');
-    const ctx = canvas.getContext('2d');
-
-    scanInterval = setInterval(()=>{
-      if(!scanStream) return;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video,0,0);
-      try{
-        const img = ctx.getImageData(0,0,canvas.width,canvas.height);
-        const lum = new ZXing.RGBLuminanceSource(img.data,canvas.width,canvas.height);
-        const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-        const result = reader.decode(bmp);
-        if(result){
-          stopScanner();
-          const code = result.getText();
-          toast(`Código: ${code}. Buscando...`,'📷');
-          tmdbSearch(code).then(results=>{
-            if(results.length) addToCollection(results[0]);
-            else toast('No encontrado en TMDB. Prueba buscar por título','⚠');
-          });
-        }
-      }catch(e){}
-    },300);
-
-  }catch(e){
-    stopScanner();
-    toast('No se pudo acceder a la cámara: '+e.message,'⚠');
+function cerrarEscaner(){
+  const wrap = document.getElementById('barcode-wrap');
+  wrap.style.display = 'none';
+  if(html5QrScanner){
+    html5QrScanner.stop().then(()=>{
+      document.getElementById('barcode-reader').innerHTML = '';
+    }).catch(()=>{});
+    html5QrScanner = null;
   }
 }
-
-function stopScanner(){
-  if(scanInterval){clearInterval(scanInterval);scanInterval=null;}
-  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
-  document.getElementById('barcode-wrap').style.display='none';
-  document.getElementById('scan-btn').textContent='📷 Código de barras';
-}
-
-document.getElementById('scan-btn').onclick = startScanner;
 
 // TABS
 document.querySelectorAll('.tab').forEach(t=>{
@@ -1077,6 +1037,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     const w=t.dataset.tab;
     ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id===w?'':'none');
     if(w==='stats')renderStats();
+    cerrarEscaner();
   };
 });
 setupSearch('search-input','search-results',m=>addToCollection(m));
