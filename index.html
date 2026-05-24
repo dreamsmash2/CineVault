@@ -1005,11 +1005,17 @@ document.getElementById('scan-btn').onclick = function() {
     {facingMode:'environment'},
     config,
     async (code) => {
-      toast(`Código: ${code}. Buscando...`,'📷');
       cerrarEscaner();
-      const results = await tmdbSearch(code);
-      if(results.length) addToCollection(results[0]);
-      else toast('No encontrado en TMDB. Prueba buscar por título','⚠');
+      // Fill search input and trigger search so user can confirm or correct
+      const searchInput = document.getElementById('search-input');
+      searchInput.value = code;
+      searchInput.focus();
+      searchInput.dispatchEvent(new Event('input', {bubbles:true}));
+      // Switch to collection tab if not already there
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelector('[data-tab="collection"]').classList.add('active');
+      ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id==='collection'?'':'none');
+      toast('Código detectado. Escribe el título si no aparece resultado','📷');
     },
     () => {}
   ).catch(err => {
