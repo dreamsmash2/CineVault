@@ -9,6 +9,8 @@
 <title>CineVault</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- html5-qrcode library for barcode scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -275,7 +277,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opa
       <div class="add-manual-btn" id="add-manual-col-btn">✏️ Añadir manualmente</div>
       <div class="scan-btn" id="scan-btn">📷 Código de barras</div>
     </div>
-    <div class="barcode-wrap" id="barcode-wrap"><video id="barcode-video" autoplay playsinline muted></video></div>
+    <div class="barcode-wrap" id="barcode-wrap">
+      <div id="barcode-reader" style="width:100%;"></div>
+    </div>
     <input type="text" class="col-search-input" id="col-search-input" placeholder="🔎  Buscar en mi colección: título, director, actor, año...">
     <div class="filters" id="col-filters"></div>
     <div class="sec">Mi colección <span class="badge badge-red" id="b-col">0</span></div>
@@ -462,7 +466,6 @@ let activeGenreFilters=new Set();
 let activeFmtFilter='';
 let activeStatusFilter='';
 let colSearchQ='';
-let barcodeStream=null;
 
 // STORAGE
 function load(){try{const r=localStorage.getItem(KEY);if(r){st=JSON.parse(r);if(!st.meta)st.meta={};}}catch(e){}}
@@ -979,37 +982,51 @@ function renderStats(){
 }
 
 // BARCODE
+// BARCODE SCANNER using html5-qrcode
+let html5Scanner = null;
+
 document.getElementById('scan-btn').onclick=async()=>{
-  const wrap=document.getElementById('barcode-wrap'),video=document.getElementById('barcode-video');
-  if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null;wrap.style.display='none';return;}
-  if(!('BarcodeDetector' in window)){toast('Tu navegador no soporta lectura de códigos de barras. Prueba con Chrome en Android','⚠');return;}
+  const wrap=document.getElementById('barcode-wrap');
+  if(html5Scanner){
+    html5Scanner.clear().catch(()=>{});
+    html5Scanner=null;
+    wrap.style.display='none';
+    return;
+  }
+  wrap.style.display='';
   try{
-    // Show wrap first so video element is visible before stream starts (needed on mobile)
-    wrap.style.display='';
-    barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
-    video.srcObject=barcodeStream;
-    await video.play();
-    const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
-    const scan=setInterval(async()=>{
-      if(!barcodeStream){clearInterval(scan);return;}
-      try{
-        const codes=await detector.detect(video);
-        if(codes.length){
-          clearInterval(scan);
-          barcodeStream.getTracks().forEach(t=>t.stop());
-          barcodeStream=null;wrap.style.display='none';
-          const code=codes[0].rawValue;
-          toast(`Código: ${code}. Buscando...`,'📷');
-          const results=await tmdbSearch(code);
-          if(results.length)addToCollection(results[0]);
-          else toast('No encontrado. Prueba buscar por título','⚠');
-        }
-      }catch(e){}
-    },300);
+    html5Scanner = new Html5QrcodeScanner(
+      'barcode-reader',
+      {
+        fps:10,
+        qrbox:{width:250,height:120},
+        formatsToSupport:[
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,
+        ],
+        rememberLastUsedCamera:true,
+        supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+      },
+      false
+    );
+    html5Scanner.render(
+      async(code)=>{
+        html5Scanner.clear().catch(()=>{});
+        html5Scanner=null;
+        wrap.style.display='none';
+        toast(`Código: ${code}. Buscando...`,'📷');
+        const results=await tmdbSearch(code);
+        if(results.length) addToCollection(results[0]);
+        else toast('No encontrado en TMDB. Prueba buscar por título','⚠');
+      },
+      ()=>{}
+    );
   }catch(e){
     wrap.style.display='none';
-    barcodeStream=null;
-    toast('No se pudo acceder a la cámara','⚠');
+    toast('No se pudo iniciar el escáner','⚠');
     console.error(e);
   }
 };
