@@ -1039,12 +1039,15 @@ document.getElementById('scan-btn').onclick = function() {
       toast(`Encontrado: "${cleanTitle}". Buscando en TMDB...`,'🔍');
 
       // Step 3: search TMDB with the clean title
-      const searchInput = document.getElementById('search-input');
-      searchInput.value = cleanTitle;
+      // Switch tab first, then fill input with delay so DOM is ready
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
       document.querySelector('[data-tab="collection"]').classList.add('active');
       ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id==='collection'?'':'none');
-      searchInput.dispatchEvent(new Event('input',{bubbles:true}));
+      setTimeout(()=>{
+        const searchInput = document.getElementById('search-input');
+        searchInput.value = cleanTitle;
+        searchInput.dispatchEvent(new Event('input',{bubbles:true}));
+      }, 200);
     },
     () => {}
   ).catch(err => {
