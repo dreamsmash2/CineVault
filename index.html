@@ -1006,16 +1006,45 @@ document.getElementById('scan-btn').onclick = function() {
     config,
     async (code) => {
       cerrarEscaner();
-      // Fill search input and trigger search so user can confirm or correct
+      toast('Buscando código...','📷');
+      // Step 1: look up barcode to get product title
+      let title = null;
+      try{
+        // Try UPC Item DB (free, no key needed, supports EAN-13 and UPC)
+        const r = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${code}`);
+        const d = await r.json();
+        if(d.items && d.items.length && d.items[0].title){
+          title = d.items[0].title;
+        }
+      }catch(e){}
+
+      if(!title){
+        // Fallback: put code in search so user can type the title
+        const searchInput = document.getElementById('search-input');
+        searchInput.value = '';
+        searchInput.focus();
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelector('[data-tab="collection"]').classList.add('active');
+        ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id==='collection'?'':'none');
+        toast('Código no encontrado. Escribe el título manualmente','⚠');
+        return;
+      }
+
+      // Step 2: clean title (remove edition info like "Blu-ray", "DVD", "4K", etc)
+      const cleanTitle = title
+        .replace(/\s*[\(\[].*(blu.?ray|dvd|4k|uhd|edition|edición|colección|steelbook|digibook).*[\)\]]/gi,'')
+        .replace(/\s*(blu.?ray|dvd|4k|uhd|steelbook)/gi,'')
+        .trim();
+
+      toast(`Encontrado: "${cleanTitle}". Buscando en TMDB...`,'🔍');
+
+      // Step 3: search TMDB with the clean title
       const searchInput = document.getElementById('search-input');
-      searchInput.value = code;
-      searchInput.focus();
-      searchInput.dispatchEvent(new Event('input', {bubbles:true}));
-      // Switch to collection tab if not already there
+      searchInput.value = cleanTitle;
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
       document.querySelector('[data-tab="collection"]').classList.add('active');
       ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id==='collection'?'':'none');
-      toast('Código detectado. Escribe el título si no aparece resultado','📷');
+      searchInput.dispatchEvent(new Event('input',{bubbles:true}));
     },
     () => {}
   ).catch(err => {
