@@ -1019,14 +1019,16 @@ document.getElementById('scan-btn').onclick = function() {
       }catch(e){}
 
       if(!title){
-        // Fallback: put code in search so user can type the title
-        const searchInput = document.getElementById('search-input');
-        searchInput.value = '';
-        searchInput.focus();
+        // Switch to collection tab and focus search for manual title entry
         document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
         document.querySelector('[data-tab="collection"]').classList.add('active');
         ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id==='collection'?'':'none');
-        toast('Código no encontrado. Escribe el título manualmente','⚠');
+        setTimeout(()=>{
+          const searchInput = document.getElementById('search-input');
+          searchInput.value = '';
+          searchInput.focus();
+          toast('Código no encontrado. Escribe el título de la película','📷');
+        },200);
         return;
       }
 
