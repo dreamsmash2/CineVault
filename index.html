@@ -1007,51 +1007,59 @@ document.getElementById('scan-btn').onclick = function() {
     async (code) => {
       cerrarEscaner();
       toast('Buscando código...','📷');
-      let title = null;
 
-      // Try EMUnation (best coverage for physical media EAN codes)
+      // Use Cloudflare Worker proxy to call EMUnation
+      let tmdbId = null;
+      let title = null;
       try{
-        const r = await fetch(`https://emunation.ch/api/v1/lookup?ean=${code}`, {
-          headers:{'Accept':'application/json'}
-        });
+        const r = await fetch(`https://gamepicker-bgg.dreamsmash.workers.dev/emunation?ean=${code}`);
         if(r.ok){
           const d = await r.json();
+          // EMUnation returns tmdb_id or similar field
+          if(d.tmdb_id) tmdbId = d.tmdb_id;
+          else if(d.tmdb) tmdbId = d.tmdb;
+          else if(d.ids && d.ids.tmdb) tmdbId = d.ids.tmdb;
           if(d.title) title = d.title;
-          else if(d.tmdb_title) title = d.tmdb_title;
           else if(d.name) title = d.name;
+          console.log('EMUnation response:', JSON.stringify(d));
         }
-      }catch(e){}
-
-      // Fallback: UPC Item DB
-      if(!title){
-        try{
-          const r = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${code}`);
-          const d = await r.json();
-          if(d.items && d.items.length && d.items[0].title) title = d.items[0].title;
-        }catch(e){}
-      }
+      }catch(e){ console.error('EMUnation error:', e); }
 
       // Switch to collection tab
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
       document.querySelector('[data-tab="collection"]').classList.add('active');
-      ['collection','wishlist','stats','settings'].forEach(id=>document.getElementById('tab-'+id).style.display=id==='collection'?'':'none');
+      ['collection','wishlist','stats','settings'].forEach(id=>
+        document.getElementById('tab-'+id).style.display=id==='collection'?'':'none'
+      );
 
-      setTimeout(()=>{
-        const searchInput = document.getElementById('search-input');
-        if(title){
-          const cleanTitle = title
-            .replace(/\s*[\(\[].*(blu.?ray|dvd|4k|uhd|edition|edición|colección|steelbook).*[\)\]]/gi,'')
-            .replace(/\s*(blu.?ray|dvd|4k|uhd|steelbook)/gi,'')
-            .trim();
-          toast(`Encontrado: "${cleanTitle}". Buscando en TMDB...`,'🔍');
-          searchInput.value = cleanTitle;
-        } else {
-          toast('Código no encontrado. Escribe el título','📷');
-          searchInput.value = '';
-        }
-        searchInput.dispatchEvent(new Event('input',{bubbles:true}));
-        searchInput.focus();
-      }, 200);
+      if(tmdbId){
+        // We have TMDB ID — fetch movie directly and add it
+        toast(`Encontrado: "${title||tmdbId}". Añadiendo...`,'🎬');
+        try{
+          const r = await fetch(`${TMDB}/movie/${tmdbId}?api_key=${TMDB_KEY}&language=es-ES`);
+          const movie = await r.json();
+          if(movie.id) addToCollection(movie);
+          else toast('Error al obtener datos de TMDB','⚠');
+        }catch(e){ toast('Error al conectar con TMDB','⚠'); }
+      } else if(title){
+        // Have title but no TMDB ID — search by title
+        const cleanTitle = title
+          .replace(/\s*[\(\[].*[\)\]]/g,'')
+          .replace(/\s*(blu.?ray|dvd|4k|uhd|steelbook)/gi,'')
+          .trim();
+        toast(`Buscando "${cleanTitle}" en TMDB...`,'🔍');
+        setTimeout(()=>{
+          const inp = document.getElementById('search-input');
+          inp.value = cleanTitle;
+          inp.dispatchEvent(new Event('input',{bubbles:true}));
+          inp.focus();
+        },200);
+      } else {
+        toast('Código no encontrado. Escribe el título','📷');
+        setTimeout(()=>{
+          document.getElementById('search-input').focus();
+        },200);
+      }
     },
     () => {}
   ).catch(err => {
