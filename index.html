@@ -838,7 +838,7 @@ function saveModal(){
   }
   // If input is hidden, trailerKey stays as it was (already saved)
   if(!st.meta[id])st.meta[id]={};
-  Object.assign(st.meta[id],{rating:modalRating,formats,notes:document.getElementById('modal-notes').value.trim(),trailerKey});
+  Object.assign(st.meta[id],{rating:modalRating,formats,status,notes:document.getElementById('modal-notes').value.trim(),trailerKey});
   save();renderAll();
   document.getElementById('movie-modal-overlay').style.display='none';
   toast('Guardado','✓');
